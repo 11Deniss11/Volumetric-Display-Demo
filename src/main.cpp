@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <FastLED.h>
 // #include <NimBLEDevice.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "cube_data.h"
 #include "icohedron_data.h"
 #include "tower_data.h"
@@ -22,14 +24,14 @@ long int lastTime = 0;
 
 double rpms;
 
-boolean firstModel = true;
+volatile boolean firstModel = true;
 
 double getRPM()
 {
     long int elapsedTime = millis() - startTime;
     if (elapsedTime == 0)
         return 0;
-    return (double(numRotations) / double(elapsedTime) * 60000.0); // Convert to minutes
+    return (double(numRotations) / double(elapsedTime) * 60000.0);
 }
 
 double getRPMS()
@@ -49,9 +51,11 @@ void IRAM_ATTR ISR() // IRAM_ATTR makes it put it in the ram rather than flash t
     rpms = getRPMS();
     if (numRotations % 250 == 0)
     {
-        firstModel = !firstModel; // Toggle between cmodels
+        firstModel = !firstModel; // Toggle between the 3d models
     }
 }
+
+// Bluetooth stuff that was removed for now:
 
 // class MyBLECallbacks : public NimBLECharacteristicCallbacks
 // {
@@ -66,47 +70,84 @@ void IRAM_ATTR ISR() // IRAM_ATTR makes it put it in the ram rather than flash t
 // void bleTask(void *pvParameters)
 // {
 //     NimBLEDevice::init("VolumetricDisplay");
+//     Serial.println(NimBLEDevice::getAddress().toString().c_str());
+
 //     NimBLEServer *pServer = NimBLEDevice::createServer();
 
-//     NimBLEService *pService = pServer->createService("12345678-1234-1234-1234-123456789abc");
+//     NimBLEService *pService = pServer->createService("NUMBER");
 //     NimBLECharacteristic *pCharacteristic = pService->createCharacteristic(
-//         "abcdefab-1234-1234-1234-abcdefabcdef",
+//         "NUMBER",
 //         NIMBLE_PROPERTY::WRITE);
 
-//     // Use the named callback class
+//
 //     pCharacteristic->setCallbacks(new MyBLECallbacks());
 
 //     pService->start();
 //     NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
 //     pAdvertising->start();
 
-//     // BLE loop
 //     while (1)
 //     {
 //         vTaskDelay(1000 / portTICK_PERIOD_MS); // Keep task alive
 //     }
 // }
 
+volatile uint8_t lastFrameNum = 0;
+volatile uint8_t frameNum = 0;
+
+void testTask(void *pvParameters)
+{
+    FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
+    FastLED.setBrightness(255);
+
+    delay(3000);
+
+    for (;;)
+    {
+        uint8_t localFrameNum = frameNum;
+        uint8_t localLastFrameNum = lastFrameNum;
+        boolean localFirstModel = firstModel;
+
+        if (localFrameNum != localLastFrameNum)
+        {
+            lastFrameNum = localFrameNum;
+            if (firstModel)
+            {
+                FastLED.addLeds<NEOPIXEL, DATA_PIN>(cube_data[frameNum], NUM_LEDS);
+                // FastLED.addLeds<NEOPIXEL, DATA_PIN>(icohedron_data[frameNum], NUM_LEDS);
+            }
+            else
+            {
+                FastLED.addLeds<NEOPIXEL, DATA_PIN>(tower_data[frameNum], NUM_LEDS);
+                //     // FastLED.addLeds<NEOPIXEL, DATA_PIN>(fighter_data[frameNum], NUM_LEDS);
+                //     // FastLED.addLeds<NEOPIXEL, DATA_PIN>(dino_data[frameNum], NUM_LEDS);
+            }
+            FastLED.show();
+        }
+    }
+}
+
 void setup()
 {
-    Serial.begin(115200);
-    // xTaskCreatePinnedToCore(
-    //     bleTask,   // Task function
-    //     "bleTask", // Name
-    //     8192,      // Stack size
-    //     NULL,      // Parameters
-    //     1,         // Priority
-    //     NULL,      // Task handle
-    //     0          // Core 0
-    // );
+    // Serial.begin(115200);
+    // delay(5000);
+
+    // Serial.println("Test Print");
+
+    // set up multitasking
+    xTaskCreatePinnedToCore(
+        testTask,   // Task function
+        "testTask", // Name
+        8192,       // Stack size
+        NULL,       // Parameters
+        1,          // Priority
+        NULL,       // Task handle
+        0           // Core 0
+    );
 
     // REED SWITCH
     pinMode(REED_PIN, INPUT_PULLDOWN);
     attachInterrupt(digitalPinToInterrupt(REED_PIN), ISR, RISING);
-
-    // LEDS
-    FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
-    FastLED.setBrightness(255);
 
     delay(3000);
 
@@ -114,9 +155,6 @@ void setup()
     numRotations = 0;
     rpms = getRPMS();
 }
-
-uint8_t lastFrameNum = 0;
-uint8_t frameNum = 0;
 
 void loop()
 {
@@ -127,20 +165,21 @@ void loop()
         frameNum = 179;
     }
 
-    if (frameNum != lastFrameNum)
-    {
-        if (firstModel)
-        {
-            FastLED.addLeds<NEOPIXEL, DATA_PIN>(cube_data[frameNum], NUM_LEDS);
-            // FastLED.addLeds<NEOPIXEL, DATA_PIN>(icohedron_data[frameNum], NUM_LEDS);
-        }
-        else
-        {
-            FastLED.addLeds<NEOPIXEL, DATA_PIN>(tower_data[frameNum], NUM_LEDS);
-            // FastLED.addLeds<NEOPIXEL, DATA_PIN>(fighter_data[frameNum], NUM_LEDS);
-            // FastLED.addLeds<NEOPIXEL, DATA_PIN>(dino_data[frameNum], NUM_LEDS);
-        }
-        FastLED.show();
-        lastFrameNum = frameNum;
-    }
+    // Moved to second esp32 core:
+
+    // if (frameNum != lastFrameNum)
+    // {
+    //     // if (firstModel)
+    //     // {
+    //     FastLED.addLeds<NEOPIXEL, DATA_PIN>(cube_data[frameNum], NUM_LEDS);
+    //     // FastLED.addLeds<NEOPIXEL, DATA_PIN>(icohedron_data[frameNum], NUM_LEDS);
+    //     // }
+    //     // else
+    //     // {
+    //     //     FastLED.addLeds<NEOPIXEL, DATA_PIN>(tower_data[frameNum], NUM_LEDS);
+    //     //     // FastLED.addLeds<NEOPIXEL, DATA_PIN>(fighter_data[frameNum], NUM_LEDS);
+    //     //     // FastLED.addLeds<NEOPIXEL, DATA_PIN>(dino_data[frameNum], NUM_LEDS);
+    //     // }
+    //     FastLED.show();
+    // }
 }
