@@ -19,6 +19,7 @@ This is a platformio project for an ESP32-S3 to make a Volumetric Display.
 ### Materials Used:
 - 16x16 WS2812B LED matrix
 - ESP32 S3 Wroom 1 N16R8V
+- Reed switch
 - **2x** 6-channel slip rings
 - 25 watt, 5 volt power supply
 - 1000kv brushless motor
