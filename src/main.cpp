@@ -17,16 +17,11 @@
 
 #include <Arduino.h>
 #include <FastLED.h>
-// #include <NimBLEDevice.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "cube_data.h"
 #include "icohedron_data.h"
 #include "tower_data.h"
 #include "fighter_data.h"
 #include "dino_data.h"
-
-// NimBLECharacteristic *pCharacteristic;
 
 #define REED_PIN 4
 #define NUM_LEDS 256
@@ -72,43 +67,6 @@ void IRAM_ATTR ISR() // IRAM_ATTR makes it put it in the ram rather than flash t
     }
 }
 
-// Bluetooth stuff that was removed for now:
-
-// class MyBLECallbacks : public NimBLECharacteristicCallbacks
-// {
-//     void onWrite(NimBLECharacteristic *pCharacteristic)
-//     {
-//         std::string value = pCharacteristic->getValue();
-//         Serial.print("Received BLE message: ");
-//         Serial.println(value.c_str());
-//     }
-// };
-
-// void bleTask(void *pvParameters)
-// {
-//     NimBLEDevice::init("VolumetricDisplay");
-//     Serial.println(NimBLEDevice::getAddress().toString().c_str());
-
-//     NimBLEServer *pServer = NimBLEDevice::createServer();
-
-//     NimBLEService *pService = pServer->createService("NUMBER");
-//     NimBLECharacteristic *pCharacteristic = pService->createCharacteristic(
-//         "NUMBER",
-//         NIMBLE_PROPERTY::WRITE);
-
-//
-//     pCharacteristic->setCallbacks(new MyBLECallbacks());
-
-//     pService->start();
-//     NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
-//     pAdvertising->start();
-
-//     while (1)
-//     {
-//         vTaskDelay(1000 / portTICK_PERIOD_MS); // Keep task alive
-//     }
-// }
-
 volatile uint8_t lastFrameNum = 0;
 volatile uint8_t frameNum = 0;
 
@@ -146,10 +104,6 @@ void testTask(void *pvParameters)
 
 void setup()
 {
-    // Serial.begin(115200);
-    // delay(5000);
-
-    // Serial.println("Test Print");
 
     // set up multitasking
     xTaskCreatePinnedToCore(
@@ -162,7 +116,7 @@ void setup()
         0           // Core 0
     );
 
-    // REED SWITCH
+    // Reed Switch Setup
     pinMode(REED_PIN, INPUT_PULLDOWN);
     attachInterrupt(digitalPinToInterrupt(REED_PIN), ISR, RISING);
 
@@ -181,22 +135,4 @@ void loop()
     {
         frameNum = 179;
     }
-
-    // Moved to second esp32 core:
-
-    // if (frameNum != lastFrameNum)
-    // {
-    //     // if (firstModel)
-    //     // {
-    //     FastLED.addLeds<NEOPIXEL, DATA_PIN>(cube_data[frameNum], NUM_LEDS);
-    //     // FastLED.addLeds<NEOPIXEL, DATA_PIN>(icohedron_data[frameNum], NUM_LEDS);
-    //     // }
-    //     // else
-    //     // {
-    //     //     FastLED.addLeds<NEOPIXEL, DATA_PIN>(tower_data[frameNum], NUM_LEDS);
-    //     //     // FastLED.addLeds<NEOPIXEL, DATA_PIN>(fighter_data[frameNum], NUM_LEDS);
-    //     //     // FastLED.addLeds<NEOPIXEL, DATA_PIN>(dino_data[frameNum], NUM_LEDS);
-    //     // }
-    //     FastLED.show();
-    // }
 }
