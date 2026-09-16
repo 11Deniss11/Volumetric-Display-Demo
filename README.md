@@ -1,7 +1,6 @@
 # DIY Volumetric Display
 
-This is a platformio project for an ESP32-S3 to make a Volumetric Display for my Youtube Channel.
-[Video Link](https://www.youtube.com/watch?v=6cujyFHZdkI&t=1s)
+This is a platformio project for an ESP32-S3 to make a Volumetric Display for a [YouTube Video](https://www.youtube.com/watch?v=6cujyFHZdkI&t=1s)
 
 ![cubeImage](https://github.com/user-attachments/assets/a238da17-0f1f-4190-975c-de3b39407505)
 
@@ -15,7 +14,7 @@ This is a platformio project for an ESP32-S3 to make a Volumetric Display for my
 
 ## 3D Print Files and Components for My Design:
 
-3D print files available for free on my [Patreon](https://www.patreon.com/posts/volumetric-3d-157857025?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
+3D print files available for free on my YouTube channel's [Patreon](https://www.patreon.com/posts/volumetric-3d-157857025?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
 ### Components Used:
 - 16x16 WS2812B LED matrix
