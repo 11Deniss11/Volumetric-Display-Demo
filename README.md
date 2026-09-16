@@ -1,6 +1,7 @@
 # DIY Volumetric Display
 
-This is a platformio project for an ESP32-S3 to make a Volumetric Display.
+This is a platformio project for an ESP32-S3 to make a Volumetric Display for my Youtube Channel.
+[Video Link](https://www.youtube.com/watch?v=6cujyFHZdkI&t=1s)
 
 ![cubeImage](https://github.com/user-attachments/assets/a238da17-0f1f-4190-975c-de3b39407505)
 
